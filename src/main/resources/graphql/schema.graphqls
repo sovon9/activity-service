@@ -1,0 +1,62 @@
+type Query
+{
+    activities(where: ActivityFilter, first: Int, after: String, last: Int, before: String, order: ActivityOrder) : ActivityConnection
+}
+
+interface Node
+{
+    id: ID!
+}
+
+input ActivityFilter
+{
+    and: [ActivityFilter]
+    or: [ActivityFilter]
+    activityId: ID
+    title: String
+    activityStatusId : Int
+    activityStatusDesc: String
+}
+
+type ActivityConnection
+{
+    edges: [ActivityEdge]
+    pageInfo: PageInfo!
+}
+
+type PageInfo
+{
+    endCursor: String
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+}
+
+type ActivityEdge
+{
+    node: Activity
+    cursor: String!
+}
+
+type Activity implements Node
+{
+    id: ID!
+    activityId: ID
+    title: String
+    activityStatusId : Int
+    activityStatusDesc: String
+}
+
+input ActivityOrder
+{
+    activityId: SortOrder
+    title: SortOrder
+    activityStatusId : SortOrder
+    activityStatusDesc: SortOrder
+}
+
+enum SortOrder
+{
+    ASC
+    DESC
+}
