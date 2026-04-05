@@ -1,8 +1,6 @@
 package com.sovon9.activity_service.util;
 
 import com.sovon9.activity_service.entities.Activity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -13,8 +11,6 @@ import java.util.Map;
 
 public class QueryBuilderUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(QueryBuilderUtil.class);
-
     public static Sort buildSort(Map<String, Object> order, String defaultField, Sort.Direction defaultDirection) {
         if (order == null || order.isEmpty()) {
             return Sort.by(defaultDirection, defaultField);
@@ -23,14 +19,22 @@ public class QueryBuilderUtil {
         List<Sort.Order> orders = new ArrayList<>();
         for (Map.Entry<String, Object> entry : order.entrySet()) {
             String field = entry.getKey();
-            String directionStr = String.valueOf(entry.getValue());
+            Object value = entry.getValue();
             
-            Sort.Direction direction = Sort.Direction.ASC;
-            if ("DESC".equalsIgnoreCase(directionStr)) {
-                direction = Sort.Direction.DESC;
+            // Handle nested objects in sorting (e.g. status: {activityStatusDesc: "ASC"})
+            if(value instanceof Map) {
+                Map<String, Object> nestedOrder = (Map<String, Object>) value;
+                for(Map.Entry<String, Object> nestedEntry : nestedOrder.entrySet()) {
+                     String nestedField = field + "." + nestedEntry.getKey();
+                     String directionStr = String.valueOf(nestedEntry.getValue());
+                     Sort.Direction direction = "DESC".equalsIgnoreCase(directionStr) ? Sort.Direction.DESC : Sort.Direction.ASC;
+                     orders.add(new Sort.Order(direction, nestedField));
+                }
+            } else {
+                String directionStr = String.valueOf(value);
+                Sort.Direction direction = "DESC".equalsIgnoreCase(directionStr) ? Sort.Direction.DESC : Sort.Direction.ASC;
+                orders.add(new Sort.Order(direction, field));
             }
-            
-            orders.add(new Sort.Order(direction, field));
         }
 
         return Sort.by(orders);
@@ -38,11 +42,10 @@ public class QueryBuilderUtil {
 
     public static Specification<Activity> buildSpecification(Map<String, Object> filter) {
         if (filter == null || filter.isEmpty()) {
-            return null; // Return null when no filter is provided
+            return null;
         }
         
         return (root, query, criteriaBuilder) -> {
-            LOGGER.error("===> buildSpecification");
             List<Predicate> predicates = buildPredicates(filter, root, criteriaBuilder);
             
             if (predicates.isEmpty()) {
@@ -86,27 +89,33 @@ public class QueryBuilderUtil {
                 if (!orPredicates.isEmpty()) {
                     predicates.add(cb.or(orPredicates.toArray(new Predicate[0])));
                 }
-            } else {
-                // Handle simple field filters
-                if (key.equals("activityStatusDesc")) {
-                    predicates.add(cb.equal(root.join("status").get("activityStatusDesc"), value));
-                } else if (key.equals("id") || key.equals("activityId")) {
+            } else if (key.equals("id") || key.equals("activityId")) {
+                try {
+                    Long parsedId = Long.parseLong(value.toString());
+                    predicates.add(cb.equal(root.get("activityId"), parsedId));
+                } catch (NumberFormatException e) {
                     try {
-                        Long parsedId = Long.parseLong(value.toString());
-                        predicates.add(cb.equal(root.get("activityId"), parsedId));
-                    } catch (NumberFormatException e) {
-                        try {
-                           String[] globalId = GlobalUtil.fromGlobalId(value.toString());
-                           if(globalId.length == 2) {
-                               predicates.add(cb.equal(root.get("activityId"), Long.parseLong(globalId[1])));
-                           }
-                        }catch (Exception ex) {
-                            // ignore 
+                        String[] globalId = GlobalUtil.fromGlobalId(value.toString());
+                        if (globalId.length == 2) {
+                            predicates.add(cb.equal(root.get("activityId"), Long.parseLong(globalId[1])));
                         }
+                    } catch (Exception ex) {
+                        // ignore
                     }
-                } else {
-                    predicates.add(cb.equal(root.get(key), value));
                 }
+            } else if (value instanceof Map) {
+                // Handle nested objects like status: { activityStatusDesc: "OPEN" }
+                Map<String, Object> nestedMap = (Map<String, Object>) value;
+                for (Map.Entry<String, Object> nestedEntry : nestedMap.entrySet()) {
+                    String nestedKey = nestedEntry.getKey();
+                    Object nestedValue = nestedEntry.getValue();
+                    if(nestedValue != null) {
+                       predicates.add(cb.equal(root.join(key).get(nestedKey), nestedValue));
+                    }
+                }
+            } else {
+                // Handle all other simple fields automatically (title, createdAt, productionUnitId, etc.)
+                predicates.add(cb.equal(root.get(key), value));
             }
         }
 

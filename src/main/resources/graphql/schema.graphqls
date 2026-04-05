@@ -87,7 +87,7 @@ input ActivityOrder
     title: SortOrder
     activityStatusId : SortOrder
     status: ActivityStatusOrder
-    activityTypeId: Int
+    activityTypeId: SortOrder
     type: ActivityTypeOrder
 }
 
