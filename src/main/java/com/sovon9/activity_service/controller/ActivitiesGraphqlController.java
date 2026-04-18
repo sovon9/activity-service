@@ -41,10 +41,22 @@ public class ActivitiesGraphqlController {
 
     @QueryMapping
     public Window<Activity> activities(ScrollSubrange subrange, @Argument Map<String, Object> where, @Argument Map<String, Object> order) {
+        // scrollPosition represents the pointer to the current position in the result set for pagination.
+        // It allows the database to resume fetching records from a specific point (cursor or offset).
+        //
+        // ScrollPosition.offset() initializes the position at the very beginning (index 0),
+        // which is used when no specific cursor or 'after'/'before' argument is provided.
         ScrollPosition scrollPosition = subrange.position().orElse(ScrollPosition.offset());
         int limit = subrange.count().orElse(10);
 
-        Sort sort = QueryBuilderUtil.buildSort(order, "activityId", Sort.Direction.ASC);
+        // When scrolling backwards (using 'last' or 'before'), subrange.forward() is false.
+        // We must reverse the sort direction to query the database correctly for backwards pagination.
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (!subrange.forward()) {
+             direction = Sort.Direction.DESC;
+        }
+
+        Sort sort = QueryBuilderUtil.buildSort(order, "activityId", direction);
         Specification<Activity> spec = QueryBuilderUtil.buildSpecification(where);
 
         if (spec == null) {

@@ -27,12 +27,28 @@ public class QueryBuilderUtil {
                 for(Map.Entry<String, Object> nestedEntry : nestedOrder.entrySet()) {
                      String nestedField = field + "." + nestedEntry.getKey();
                      String directionStr = String.valueOf(nestedEntry.getValue());
-                     Sort.Direction direction = "DESC".equalsIgnoreCase(directionStr) ? Sort.Direction.DESC : Sort.Direction.ASC;
+                     
+                     // When backward pagination is requested, defaultDirection is DESC.
+                     // We need to invert the user's requested sort to fetch from the end.
+                     Sort.Direction direction;
+                     if (defaultDirection == Sort.Direction.DESC) {
+                         direction = "DESC".equalsIgnoreCase(directionStr) ? Sort.Direction.ASC : Sort.Direction.DESC;
+                     } else {
+                         direction = "DESC".equalsIgnoreCase(directionStr) ? Sort.Direction.DESC : Sort.Direction.ASC;
+                     }
                      orders.add(new Sort.Order(direction, nestedField));
                 }
             } else {
                 String directionStr = String.valueOf(value);
-                Sort.Direction direction = "DESC".equalsIgnoreCase(directionStr) ? Sort.Direction.DESC : Sort.Direction.ASC;
+                
+                // Inverse logic for backward pagination
+                Sort.Direction direction;
+                if (defaultDirection == Sort.Direction.DESC) {
+                    direction = "DESC".equalsIgnoreCase(directionStr) ? Sort.Direction.ASC : Sort.Direction.DESC;
+                } else {
+                    direction = "DESC".equalsIgnoreCase(directionStr) ? Sort.Direction.DESC : Sort.Direction.ASC;
+                }
+                
                 orders.add(new Sort.Order(direction, field));
             }
         }
@@ -42,7 +58,7 @@ public class QueryBuilderUtil {
 
     public static Specification<Activity> buildSpecification(Map<String, Object> filter) {
         if (filter == null || filter.isEmpty()) {
-            return null;
+            return null; // Return null when no filter is provided
         }
         
         return (root, query, criteriaBuilder) -> {
@@ -89,7 +105,8 @@ public class QueryBuilderUtil {
                 if (!orPredicates.isEmpty()) {
                     predicates.add(cb.or(orPredicates.toArray(new Predicate[0])));
                 }
-            } else if (key.equals("id") || key.equals("activityId")) {
+            }
+            else if (key.equals("id") || key.equals("activityId")) {
                 try {
                     Long parsedId = Long.parseLong(value.toString());
                     predicates.add(cb.equal(root.get("activityId"), parsedId));
@@ -103,7 +120,8 @@ public class QueryBuilderUtil {
                         // ignore
                     }
                 }
-            } else if (value instanceof Map) {
+            }
+            else if (value instanceof Map) {
                 // Handle nested objects like status: { activityStatusDesc: "OPEN" }
                 Map<String, Object> nestedMap = (Map<String, Object>) value;
                 for (Map.Entry<String, Object> nestedEntry : nestedMap.entrySet()) {
