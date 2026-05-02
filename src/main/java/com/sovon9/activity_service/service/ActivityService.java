@@ -3,6 +3,9 @@ package com.sovon9.activity_service.service;
 import com.sovon9.activity_service.dto.ActivityDto;
 import com.sovon9.activity_service.entities.Activity;
 import com.sovon9.activity_service.repositories.ActivityRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +56,7 @@ public class ActivityService {
     }
 
     public ActivityDto getActivityDataByStatus(String status) {
-        Activity activity = activityRepository.findByStatus(status);
+        Activity activity = activityRepository.findByStatusActivityStatusDesc(status);
         if(null==activity)
         {
             return null;
@@ -61,5 +64,11 @@ public class ActivityService {
         ActivityDto activityDto = new ActivityDto(activity.getActivityId(), activity.getStatus(), activity.getType(),
                 activity.getTitle(), activity.getCreatedAt(), activity.getProductionUnitId(), activity.getProcessOrderId());
         return activityDto;
+    }
+
+    public Page<Activity> getActivities(int page) {
+
+        PageRequest request = PageRequest.of(page, 2, Sort.by(Sort.Direction.DESC, "activityId"));
+        return activityRepository.findAll(request);
     }
 }

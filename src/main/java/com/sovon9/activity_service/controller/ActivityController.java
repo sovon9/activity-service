@@ -1,7 +1,11 @@
 package com.sovon9.activity_service.controller;
 
 import com.sovon9.activity_service.dto.ActivityDto;
+import com.sovon9.activity_service.entities.Activity;
 import com.sovon9.activity_service.service.ActivityService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +18,8 @@ import java.util.List;
 public class ActivityController {
 
     private ActivityService activityService;
+
+    private Logger LOGGER = LoggerFactory.getLogger(ActivityController.class);
 
     public ActivityController(ActivityService activityService)
     {
@@ -57,5 +63,12 @@ public class ActivityController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return ResponseEntity.ok(activityDto);
+    }
+
+
+    @GetMapping("/v1/activities/page/{page}")
+    public Page<Activity> getActivities(@PathVariable int page)
+    {
+        return activityService.getActivities(page);
     }
 }
