@@ -14,4 +14,5 @@ public interface ActivityRepository extends JpaRepository<Activity, Long>, JpaSp
 
     Window<Activity> findBy(ScrollPosition position, Limit limit, Sort sort);
 
+    Activity findByStatus(String status);
 }

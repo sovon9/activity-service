@@ -1,9 +1,13 @@
+directive @lookup on FIELD_DEFINITION
+directive @internal on FIELD_DEFINITION
+directive @sharable on INTERFACE | OBJECT | FIELD_DEFINITION
+
 type Query
 {
     activities(where: ActivityFilter, first: Int, after: String, last: Int, before: String, order: ActivityOrder) : ActivityConnection
 }
 
-interface Node
+interface Node @sharable
 {
     id: ID!
 }
@@ -55,7 +59,7 @@ type ActivityEdge
     cursor: String!
 }
 
-type Activity implements Node
+type Activity implements Node @sharable
 {
     id: ID!
     activityId: ID
