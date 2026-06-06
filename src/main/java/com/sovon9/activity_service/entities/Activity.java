@@ -130,11 +130,14 @@ public class Activity implements Node{
 
     @Override
     public String getId() {
-        return GlobalUtil.toGlobalId("Activity", activityId);
+        return id;
     }
-
     @Override
     public void setId(String id) {
         this.id = id;
+    }
+    @PostLoad
+    public void postLoad() {
+        this.id = GlobalUtil.toGlobalId("Activity", activityId);
     }
 }
