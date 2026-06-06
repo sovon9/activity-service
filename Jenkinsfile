@@ -8,7 +8,7 @@ pipeline
             steps{
                 echo "Build the java project"
                 sh "chmod +x mvnw"
-                sh './mvn clean install'
+                sh "./mvnw clean install"
             }
         }
     }
