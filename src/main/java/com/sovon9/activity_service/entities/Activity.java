@@ -1,5 +1,6 @@
 package com.sovon9.activity_service.entities;
 
+import com.sovon9.activity_service.dto.ProductionUnit;
 import com.sovon9.activity_service.util.GlobalUtil;
 import jakarta.persistence.*;
 
@@ -40,6 +41,10 @@ public class Activity implements Node{
 
     @Column(name = "production_unit_id")
     private Long productionUnitId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "production_unit_id", insertable = false, updatable = false)
+    private ProductionUnit productionUnit;
 
     @Column(name = "process_order_id")
     private Long processOrderId;
