@@ -16,6 +16,7 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.BatchMapping;
 import org.springframework.graphql.data.query.ScrollSubrange;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
 import java.util.HashMap;
@@ -39,6 +40,7 @@ public class ActivitiesGraphqlController {
         this.activityTypeRepository = activityTypeRepository;
     }
 
+    @PreAuthorize("hasRole('activity.read')")
     @QueryMapping
     public Window<Activity> activities(ScrollSubrange subrange, @Argument Map<String, Object> where, @Argument Map<String, Object> order) {
         // scrollPosition represents the pointer to the current position in the result set for pagination.
